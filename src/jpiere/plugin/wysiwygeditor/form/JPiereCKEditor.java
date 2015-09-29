@@ -16,8 +16,15 @@ package jpiere.plugin.wysiwygeditor.form;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
+
+
+
+
 
 
 
@@ -61,6 +68,7 @@ import org.zkoss.zhtml.Text;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.Menuitem;
@@ -98,8 +106,9 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 	private boolean isMultiLingual = true;
 	private boolean isSameClientData = false;
 	
-	protected Combobox lstLanguage;
-
+	private final String JPIERE_CKEDITOR_IMAGE_PATH = MSysConfig.getValue("JPIERE_CKEDITOR_IMAGE_PATH", Env.getAD_Client_ID(Env.getCtx()));
+	private final String JPIERE_CKEDITOR_CUSTOM_CONFIGURATIONS_PATH = MSysConfig.getValue("JPIERE_CKEDITOR_CUSTOM_CONFIGURATIONS_PATH", Env.getAD_Client_ID(Env.getCtx()));
+	
 	/**********************************************************************
 	 * UI Component
 	 **********************************************************************/
@@ -113,6 +122,11 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 	private Grid parameterLayout = GridFactory.newGridLayout();
 
 	private WTableDirEditor tableDirEditor;
+	
+	private Combobox imagePathCombobox;
+	
+	private String[] imageDirs;
+	private String imagePath;
 	
 	private Button SaveButton;
 
@@ -267,11 +281,12 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 		
 		row = parameterLayoutRows.newRow();   
 		
+		//List of Launguage
 		if(isMultiLingual)
 		{
-			String elementName = Msg.getElement(Env.getCtx(), MLanguage.COLUMNNAME_AD_Language);
-			org.adempiere.webui.component.Label searchEditorLabel = new org.adempiere.webui.component.Label (elementName);
-			row.appendCellChild(searchEditorLabel.rightAlign(),1);	
+			String languageElementName = Msg.getElement(Env.getCtx(), MLanguage.COLUMNNAME_AD_Language);
+			org.adempiere.webui.component.Label languageLabel = new org.adempiere.webui.component.Label (languageElementName);
+			row.appendCellChild(languageLabel.rightAlign(),1);	
 			
 			int AD_Column_ID = MColumn.getColumn_ID(MClient.Table_Name, MClient.COLUMNNAME_AD_Language);
 			MLookup lookup = MLookupFactory.get (Env.getCtx(), wysiwygEditorForm.getWindowNo(), 0, AD_Column_ID, DisplayType.Table);
@@ -311,7 +326,39 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 		}//if(isMultiLingual)
 				
 		
-    	//Button
+
+		//Image Path ComboBox
+		if(JPIERE_CKEDITOR_IMAGE_PATH != null)
+		{
+			imageDirs = JPIERE_CKEDITOR_IMAGE_PATH.split(";");
+	        
+	        for(int i = 0; imageDirs.length > i ; i++)
+	        {
+	        	if(i==0)
+	        	{
+	        		imagePathCombobox = new Combobox();
+	        		imagePathCombobox.setAutocomplete(true);
+	        		imagePathCombobox.setAutodrop(true);
+	        		imagePathCombobox.setId("lstImagePath");
+	        		imagePathCombobox.addEventListener(Events.ON_SELECT, this);
+	        		
+	        		imagePath = imageDirs[i];
+	        		String pathElementName = Msg.getElement(Env.getCtx(), MLanguage.COLUMNNAME_AD_Language);
+	    			org.adempiere.webui.component.Label imagePathLabel = new org.adempiere.webui.component.Label (pathElementName);
+	    			row.appendCellChild(imagePathLabel.rightAlign(),1);	
+	    			
+	        		imagePathCombobox.setValue(imageDirs[i]);
+	        		setImagePath(imageDirs[i]);
+	        		row.appendCellChild(imagePathCombobox,2);
+	        	}
+	        	
+	        	imagePathCombobox.appendItem(imageDirs[i]);
+	        }
+		
+		}
+        
+        
+    	//Save Button
 		if(isSameClientData)
 		{
 			SaveButton = new Button(Msg.getMsg(Env.getCtx(), "save"));
@@ -321,24 +368,22 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 			SaveButton.setImage(ThemeManager.getThemeResource("images/Save16.png"));
 			row.appendCellChild(SaveButton);
 		}
-
-
+        
 		//for space under Button
 		row = parameterLayoutRows.newRow();
-				row.appendCellChild(new Space(),1);
-
-		String imageDir = MSysConfig.getValue("JPIERE_CKEDITOR_IMAGE_DIR", Env.getAD_Client_ID(Env.getCtx()));
-		if(imageDir==null)
-		{
-			imageDir = "images/";
-		}
-				
+				row.appendCellChild(new Space(),1);      
+        
 		//Edit Area
 		mainLayout.appendChild(center);
-			ckeditor.setFilebrowserImageUploadUrl(imageDir);
-			ckeditor.setFilebrowserBrowseUrl(imageDir);
-			ckeditor.setFilebrowserImageBrowseUrl(imageDir);
 			ckeditor.setValue((String)po.get_Value(columnName));
+			ckeditor.setVflex("1");
+			Map<String,Object> lang = new HashMap<String,Object>();
+			lang.put("language", Language.getLoginLanguage().getAD_Language());
+			ckeditor.setConfig(lang);
+			if(JPIERE_CKEDITOR_CUSTOM_CONFIGURATIONS_PATH != null)
+				ckeditor.setCustomConfigurationsPath(JPIERE_CKEDITOR_CUSTOM_CONFIGURATIONS_PATH);
+//			ckeditor.setCustomConfigurationsPath("/images/config.js");
+//			ckeditor.setToolbar("MyToolbar");
 			center.appendChild(ckeditor);
 			
 		mainLayout.appendChild(south);
@@ -364,15 +409,17 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 				if (tableDirEditor.getValue()== null || tableDirEditor.getValue().toString().equals(baselang)) 
 				{
 					po.set_ValueNoCheck(columnName, ckeditor.getValue());
+					po.saveEx();
 					
-					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
-						.append(baseTableName).append(" SET ").append(columnName).append("='").append(ckeditor.getValue()).append("'")
-						.append(" WHERE ").append(keyColumnName).append("=").append(po.get_ID());
-					int no = DB.executeUpdate(sqlupdate.toString(), null);
-					if(no != 1)
-					{
-						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));//TODO:Do appropriate message:
-					}
+//					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
+//						.append(baseTableName).append(" SET ").append(columnName).append("='").append(ckeditor.getValue()).append("'")
+//						.append(" WHERE ").append(keyColumnName).append("=").append(po.get_ID());
+//					int no = DB.executeUpdate(sqlupdate.toString(), null);
+//					if(no != 1)
+//					{
+//						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));
+//					}
+					
 				}else{//Update Trl
 					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
 						.append(trlTableName).append(" SET ").append(columnName).append("='").append(ckeditor.getValue()).append("'")
@@ -389,6 +436,41 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 				throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));
 			}
 
+		}else if(e.getTarget().equals(imagePathCombobox)){
+			
+			String tempPath = ((Combobox)e.getTarget()).getValue();
+			
+			//Check path;
+			boolean isOK = false;
+			for(int i = 0; imageDirs.length > i ; i++)
+			{
+				if(tempPath.equals(imageDirs[i]))
+				{
+					isOK = true;
+					imagePath = tempPath;
+				}
+			}
+			
+			if(!isOK)
+			{
+				imagePathCombobox.setValue(imagePath);
+				throw new Exception(tempPath + Msg.getMsg(Env.getCtx(), "not.found"));
+			}
+			
+			center.getChildren().remove(ckeditor);
+			
+			ckeditor = new CKeditor();
+			ckeditor.setVflex("1");
+			Map<String,Object> lang = new HashMap<String,Object>();
+			lang.put("language", Language.getLoginLanguage().getAD_Language());
+			ckeditor.setConfig(lang);
+			if(JPIERE_CKEDITOR_CUSTOM_CONFIGURATIONS_PATH != null)
+				ckeditor.setCustomConfigurationsPath(JPIERE_CKEDITOR_CUSTOM_CONFIGURATIONS_PATH);
+			
+			setImagePath(imagePath);	
+			refreshCKEditor();
+			
+			center.appendChild(ckeditor);			
 		}
 
 	}//onEvent()
@@ -398,6 +480,21 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 	public void valueChange(ValueChangeEvent e)
 	{
 		tableDirEditor.setValue(e.getNewValue());
+		refreshCKEditor();		
+	}//valueChange(ValueChangeEvent e)
+	
+	private void setImagePath(String path)
+	{
+		ckeditor.setFilebrowserImageBrowseUrl(path);
+		ckeditor.setFilebrowserImageUploadUrl(path);
+		ckeditor.setFilebrowserBrowseUrl(path);
+		ckeditor.setFilebrowserUploadUrl(path);
+		ckeditor.setFilebrowserFlashBrowseUrl(path);
+		ckeditor.setFilebrowserFlashUploadUrl(path);
+	}
+	
+	private void refreshCKEditor()
+	{
 		if (tableDirEditor.getValue()== null || tableDirEditor.getValue().toString().equals(baselang))
 		{
 			ckeditor.setValue((String)po.get_Value(columnName));	
@@ -426,7 +523,6 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 				pstmt = null;
 			}
 		}
-		
-	}//valueChange(ValueChangeEvent e)
+	}
 
 }
