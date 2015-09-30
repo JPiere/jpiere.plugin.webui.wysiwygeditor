@@ -1,5 +1,5 @@
 /******************************************************************************
- * Product: JPiere(Japan + iDempiere)                                         *
+ * Product: JPiere                                                            *
  * Copyright (C) Hideaki Hagiwara (h.hagiwara@oss-erp.co.jp)                  *
  *                                                                            *
  * This program is free software, you can redistribute it and/or modify it    *
@@ -8,7 +8,7 @@
  * that it will be useful, but WITHOUT ANY WARRANTY.                          *
  * See the GNU General Public License for more details.                       *
  *                                                                            *
- *  JPiere is maintained by OSS ERP Solutions Co., Ltd.                       *
+ * JPiere is maintained by OSS ERP Solutions Co., Ltd.                        *
  * (http://www.oss-erp.co.jp)                                                 *
  *****************************************************************************/
 package jpiere.plugin.wysiwygeditor.form;
@@ -16,7 +16,6 @@ package jpiere.plugin.wysiwygeditor.form;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
