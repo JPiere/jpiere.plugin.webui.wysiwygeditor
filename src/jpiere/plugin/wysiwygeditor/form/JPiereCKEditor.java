@@ -402,16 +402,17 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 				if (tableDirEditor.getValue()== null || tableDirEditor.getValue().toString().equals(baselang))
 				{
 					po.set_ValueNoCheck(columnName, ckeditor.getValue());
-					po.saveEx();
 
-//					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
-//						.append(baseTableName).append(" SET ").append(columnName).append("='").append(ckeditor.getValue()).append("'")
-//						.append(" WHERE ").append(keyColumnName).append("=").append(po.get_ID());
-//					int no = DB.executeUpdate(sqlupdate.toString(), null);
-//					if(no != 1)
-//					{
-//						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));
-//					}
+//					po.saveEx();
+
+					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
+						.append(baseTableName).append(" SET ").append(columnName).append("='").append(ckeditor.getValue()).append("'")
+						.append(" WHERE ").append(keyColumnName).append("=").append(po.get_ID());
+					int no = DB.executeUpdate(sqlupdate.toString(), null);
+					if(no != 1)
+					{
+						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));//TODO:Rollback and Do appropriate message:
+					}
 
 				}else{//Update Trl
 					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
@@ -421,7 +422,7 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 					int no = DB.executeUpdate(sqlupdate.toString(), null);
 					if(no != 1)
 					{
-						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));//TODO:Do appropriate message:
+						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));//TODO:Rollback and Do appropriate message:
 					}
 				}
 
