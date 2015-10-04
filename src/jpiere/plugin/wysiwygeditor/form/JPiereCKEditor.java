@@ -56,6 +56,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Msg;
+import org.compiere.util.Trx;
 import org.zkforge.ckez.CKeditor;
 import org.zkoss.zhtml.Text;
 import org.zkoss.zk.ui.Component;
@@ -383,6 +384,9 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 		south.setHeight("0px");
 	}
 
+
+	private String m_trxName;
+
 	@Override
 	public void onEvent(Event e) throws Exception
 	{
@@ -397,34 +401,45 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 			{
 				po.set_ValueNoCheck(columnName, ckeditor.getValue());
 				po.saveEx();
+
 			}else if(isMultiLingual){
 
+				Trx trx = null;
+				if (m_trxName == null)
+				{
+					StringBuilder l_trxname = new StringBuilder("CKEditor").append(baseTableName);
+					if (l_trxname.length() > 23)
+						l_trxname.setLength(23);
+					m_trxName = Trx.createTrxName(l_trxname.toString());
+					trx = Trx.get(m_trxName, true);
+				}
+
+				StringBuilder sqlupdate = null;
 				if (tableDirEditor.getValue()== null || tableDirEditor.getValue().toString().equals(baselang))
 				{
 					po.set_ValueNoCheck(columnName, ckeditor.getValue());
-
-//					po.saveEx();
-
-					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
+					sqlupdate = new StringBuilder("UPDATE ")
 						.append(baseTableName).append(" SET ").append(columnName).append("='").append(ckeditor.getValue()).append("'")
 						.append(" WHERE ").append(keyColumnName).append("=").append(po.get_ID());
-					int no = DB.executeUpdate(sqlupdate.toString(), null);
-					if(no != 1)
-					{
-						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));//TODO:Rollback and Do appropriate message:
-					}
 
 				}else{//Update Trl
-					StringBuilder sqlupdate = new StringBuilder("UPDATE ")
+					 sqlupdate = new StringBuilder("UPDATE ")
 						.append(trlTableName).append(" SET ").append(columnName).append("='").append(ckeditor.getValue()).append("'")
 						.append(" WHERE ").append(keyColumnName).append("=").append(po.get_ID())
 						.append(" AND AD_Language =").append(DB.TO_STRING(tableDirEditor.getValue().toString()));
-					int no = DB.executeUpdate(sqlupdate.toString(), null);
-					if(no != 1)
-					{
-						throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));//TODO:Rollback and Do appropriate message:
-					}
 				}
+
+				int no = DB.executeUpdate(sqlupdate.toString(), m_trxName);
+				if(no == 1)
+				{
+					trx.commit();
+					m_trxName = null;
+				}else{
+					trx.rollback();
+					m_trxName = null;
+					throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));
+				}
+
 
 			}else{
 				throw new Exception(Msg.getMsg(Env.getCtx(), "SaveError"));
