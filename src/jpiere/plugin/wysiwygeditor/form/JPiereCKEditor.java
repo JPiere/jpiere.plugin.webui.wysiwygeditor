@@ -81,7 +81,6 @@ import org.zkoss.zul.impl.XulElement;
  */
 public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener, IFormController{
 
-	/**	Logger			*/
 	private  static CLogger log = CLogger.getCLogger(JPiereCKEditor.class);
 
 	private String baselang = Language.getBaseAD_Language();
