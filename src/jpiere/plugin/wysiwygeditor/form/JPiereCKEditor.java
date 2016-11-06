@@ -39,6 +39,7 @@ import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.panel.IFormController;
 import org.adempiere.webui.theme.ThemeManager;
+import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.model.GridTab;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
@@ -162,8 +163,8 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 		wysiwygEditorForm.setSizable(true);
 		wysiwygEditorForm.setClosable(true);
 		wysiwygEditorForm.setMaximizable(true);
-		wysiwygEditorForm.setWidth("95%");
-		wysiwygEditorForm.setHeight("80%");
+		ZKUpdateUtil.setWidth(wysiwygEditorForm, "95%");
+		ZKUpdateUtil.setHeight(wysiwygEditorForm, "80%");
 		wysiwygEditorForm.appendChild (mainLayout);
 		LayoutUtils.addSclass("jpiere-ckeditor-form-content", mainLayout);
 		wysiwygEditorForm.setBorder("normal");
@@ -258,8 +259,8 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 	private void zkInit()
 	{
 		/*Main Layout(Borderlayout)*/
-		mainLayout.setWidth("100%");
-		mainLayout.setHeight("100%");
+		ZKUpdateUtil.setWidth(mainLayout, "100%");
+		ZKUpdateUtil.setHeight(mainLayout, "100%");
 
 		mainLayout.appendChild(north);
 
@@ -267,7 +268,7 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 		north.appendChild(parameterPanel);
 		north.setStyle("border: none");
 		parameterPanel.appendChild(parameterLayout); 		//parameterLayout is Grid
-		parameterLayout.setWidth("100%");
+		ZKUpdateUtil.setWidth(parameterLayout, "100%");
 		Rows parameterLayoutRows = parameterLayout.newRows();
 		Row row = null;
 
@@ -380,7 +381,7 @@ public class JPiereCKEditor implements EventListener<Event>, ValueChangeListener
 			center.appendChild(ckeditor);
 
 		mainLayout.appendChild(south);
-		south.setHeight("0px");
+		ZKUpdateUtil.setHeight(south, "0px");
 	}
 
 
