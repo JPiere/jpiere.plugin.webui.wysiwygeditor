@@ -18,3 +18,4 @@ Bundle-Activator: org.adempiere.plugin.utils.AdempiereActivator
 Service-Component: OSGI-INF/JPierePluginWysiwygEditorFormFactoryy.xml
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: jpiere.plugin.webui.wysiwygeditor
+Bundle-RequiredExecutionEnvironment: JavaSE-11

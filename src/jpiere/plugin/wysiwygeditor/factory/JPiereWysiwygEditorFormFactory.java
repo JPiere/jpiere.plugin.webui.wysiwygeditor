@@ -53,7 +53,7 @@ public class JPiereWysiwygEditorFormFactory implements IFormFactory{
 			  }
 		         try
 			  {
-			    form = clazz.newInstance();
+			    form = clazz.getDeclaredConstructor().newInstance();
 			  }
 			  catch (Exception e)
 			  {
